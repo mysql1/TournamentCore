@@ -12,7 +12,11 @@ mechanics and functionality.
 It is completely open source; community involvement is highly encouraged.
 
 If you wish to contribute ideas or code please visit our site linked below or
-make pull requests to our [Github repository](https://github.com/TournamentCore/TournamentCore
+make pull requests to our [Github repository] (https://github.com/TournamentCore/TournamentCore
+
+## Database
+
+Download [TDB_full_335.1_2015_5_11.sql](http://www.mediafire.com/download/y1zh0258dwaf99n/TDB_full_335.1_2015_5_11.sql.7z).
 
 ## Requirements
 
