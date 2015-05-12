@@ -20664,16 +20664,27 @@ void Player::Whisper(std::string const& text, Language language, Player* target,
     std::string _text(text);
     sScriptMgr->OnPlayerChat(this, CHAT_MSG_WHISPER, language, _text, target);
 
-    WorldPacket data;
-    ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER, Language(language), this, this, _text);
-    target->GetSession()->SendPacket(&data);
+	// when player you are whispering to is dnd, he cannot receive your message, unless you are in gm mode
+	if (!target->isDND() || IsGameMaster())
+	{
+		WorldPacket data;
+		ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER, Language(language), this, this, _text);
+		target->GetSession()->SendPacket(&data);
+
+		// not send confirmation for addon messages
+		if (!isAddonMessage)
+		{
+			ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER_INFORM, Language(language), target, target, _text);
+			GetSession()->SendPacket(&data);
+		}
+	}
+	else if (!isAddonMessage)
+	// announce to player that player he is whispering to is dnd and cannot receive his message
+	ChatHandler(GetSession()).PSendSysMessage(LANG_PLAYER_DND, target->GetName().c_str(), target->autoReplyMsg.c_str());
 
     // rest stuff shouldn't happen in case of addon message
     if (isAddonMessage)
         return;
-
-    ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER_INFORM, Language(language), target, target, _text);
-    GetSession()->SendPacket(&data);
 
     if (!isAcceptWhispers() && !IsGameMaster() && !target->IsGameMaster())
     {
@@ -20681,11 +20692,13 @@ void Player::Whisper(std::string const& text, Language language, Player* target,
         ChatHandler(GetSession()).SendSysMessage(LANG_COMMAND_WHISPERON);
     }
 
-    // announce afk or dnd message
+    // announce to player that player he is whispering to is afk
     if (target->isAFK())
         ChatHandler(GetSession()).PSendSysMessage(LANG_PLAYER_AFK, target->GetName().c_str(), target->autoReplyMsg.c_str());
-    else if (target->isDND())
-        ChatHandler(GetSession()).PSendSysMessage(LANG_PLAYER_DND, target->GetName().c_str(), target->autoReplyMsg.c_str());
+
+	// if player whisper someone, auto turn off dnd to be able to receive an answer
+	if (isDND() && !target->IsGameMaster())
+		ToggleDND();
 }
 
 Item* Player::GetMItem(uint32 id)
